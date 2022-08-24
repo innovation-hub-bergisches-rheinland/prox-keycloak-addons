@@ -37,7 +37,6 @@ jobs:
 
       - name: Maven Deploy
         env:
-          GITHUB_MAVEN_USERNAME: ${{ env.GITHUB_ACTOR }}
           GITHUB_MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mvn -nsu -B -e -DskipTests deploy
