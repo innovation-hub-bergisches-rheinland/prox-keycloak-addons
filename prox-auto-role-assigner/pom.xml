@@ -8,7 +8,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>prox-auto-role-assigner</artifactId>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <name>prox-auto-role-assigner</name>
 
     <properties>

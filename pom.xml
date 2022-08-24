@@ -25,6 +25,10 @@
         <developerConnection>scm:git:git@github.com:innovation-hub-bergisches-rheinland/prox-keycloak-addons.git</developerConnection>
     </scm>
 
+    <modules>
+        <module>prox-auto-role-assigner</module>
+    </modules>
+
     <distributionManagement>
         <repository>
             <id>github</id>
@@ -51,10 +55,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <modules>
-        <module>prox-auto-role-assigner</module>
-    </modules>
 
     <dependencies>
         <dependency>
