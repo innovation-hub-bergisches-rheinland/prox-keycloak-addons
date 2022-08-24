@@ -40,3 +40,8 @@ jobs:
           GITHUB_MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mvn -nsu -B -e -DskipTests deploy
+
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "**/target/prox-*.jar"
+          token: ${{ secrets.GITHUB_TOKEN }}

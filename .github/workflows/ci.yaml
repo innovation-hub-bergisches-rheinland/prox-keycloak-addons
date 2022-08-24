@@ -62,3 +62,9 @@ jobs:
           mvn deploy -nsu -B
         env:
           GITHUB_MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "**/target/prox-*.jar"
+          prerelease: true
+          token: ${{ secrets.GITHUB_TOKEN }}
