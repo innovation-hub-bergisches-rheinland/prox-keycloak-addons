@@ -12,5 +12,5 @@ in PROX are assigned once a user verifies a E-Mail address from a TH Köln Domai
 ## Release
 
 ```
-mvn release:prepare
+./mvnw release:clean release:prepare
 ```
