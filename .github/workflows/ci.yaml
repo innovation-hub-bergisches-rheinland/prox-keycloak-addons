@@ -1,0 +1,175 @@
+name: CI
+
+on:
+  # Run on every pull request
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+  push:
+    branches: [ main ]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  JAVA_VERSION: 17
+  MAVEN_SETTINGS: .github/settings.xml
+
+# Will build the binaries, run tests and checks on them and if everything succeeds AND it is a push
+# to the main branch will build and deploy a snapshot release of the binaries
+
+jobs:
+  # Simply compile the maven project and upload the build
+  build:
+    name: Maven Compile
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v2
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Update Maven Settings
+        run: mkdir -p ~/.m2 ; cp ${{ env.MAVEN_SETTINGS }} ~/.m2
+
+      # No Snapshot Updates, Batch Mode, Show errors and skip tests
+      - name: Build Project
+        run: mvn clean compile -nsu -B -e
+
+      # Upload the built artifacts
+      - name: Store Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: maven-target.zip
+          retention-days: 2
+          path: |
+            ./target/**
+
+  # run tests on pre-built files
+  unit-test:
+    name: Unit Tests
+
+    needs: [ build ]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v2
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Update Maven Settings
+        run: mkdir -p ~/.m2 ; cp ${{ env.MAVEN_SETTINGS }} ~/.m2
+
+      - name: Download build
+        uses: actions/download-artifact@v2
+        with:
+          path: ./target
+          name: maven-target.zip
+
+      - name: Run unit tests
+        run: |
+          if ! mvn test -nsu -B; then
+            find . -path '*/target/surefire-reports/*.xml' | zip -q reports-unit-tests.zip -@
+            exit 1
+          fi
+
+      - name: Unit test reports
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: reports-unit-tests
+          retention-days: 14
+          path: reports-unit-tests.zip
+          if-no-files-found: ignore
+
+  package:
+    name: Maven package
+
+    needs: [ build ]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v2
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Download build
+        uses: actions/download-artifact@v2
+        with:
+          path: ./target
+          name: maven-target.zip
+
+      - name: Update Maven Settings
+        run: mkdir -p ~/.m2 ; cp ${{ env.MAVEN_SETTINGS }} ~/.m2
+
+      - name: Maven Package
+        run: |
+          mvn -nsu -B -e -DskipTests package
+
+      # Upload the built artifacts
+      - name: Store Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: maven-target.zip
+          retention-days: 2
+          path: |
+            ./target/**
+
+  release:
+    name: Release
+
+    needs: [ unit-test, package ]
+
+    # Only run if a tag is created
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v2
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Update Maven Settings
+        run: mkdir -p ~/.m2 ; cp ${{ env.MAVEN_SETTINGS }} ~/.m2
+
+      - name: Download build
+        uses: actions/download-artifact@v2
+        with:
+          path: ./target
+          name: maven-target.zip
+
+      - name: Maven Deploy
+        env:
+          GITHUB_MAVEN_USERNAME: ${{ env.GITHUB_ACTOR }}
+          GITHUB_MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mvn -nsu -B -e -DskipTests deploy
