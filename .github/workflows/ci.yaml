@@ -60,4 +60,5 @@ jobs:
       - name: Deploy
         run: mvn deploy -nsu -B
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_MAVEN_USERNAME: ${{ env.GITHUB_ACTOR }}
+          GITHUB_MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
