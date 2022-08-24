@@ -35,8 +35,9 @@ jobs:
       - name: Run unit tests
         run: mvn test -nsu -B
 
-  package:
-    name: Package
+
+  snapshot:
+    name: Snapshot Release
 
     needs: [ test ]
 
@@ -56,5 +57,7 @@ jobs:
       - name: Update Maven Settings
         run: mkdir -p ~/.m2 ; cp ${{ env.MAVEN_SETTINGS }} ~/.m2
 
-      - name: Run unit tests
-        run: mvn package -nsu -B
+      - name: Deploy
+        run: mvn deploy -nsu -B
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

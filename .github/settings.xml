@@ -21,12 +21,4 @@
             </repositories>
         </profile>
     </profiles>
-
-    <servers>
-        <server>
-            <id>github</id>
-            <username>${GITHUB_MAVEN_USERNAME}</username>
-            <password>${GITHUB_MAVEN_PASSWORD}</password>
-        </server>
-    </servers>
 </settings>
