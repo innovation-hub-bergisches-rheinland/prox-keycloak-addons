@@ -58,7 +58,8 @@ jobs:
         run: mkdir -p ~/.m2 ; cp ${{ env.MAVEN_SETTINGS }} ~/.m2
 
       - name: Deploy
-        run: mvn deploy -nsu -B
+        run: |
+          mvn deploy -nsu -B
         env:
           GITHUB_MAVEN_USERNAME: ${{ env.GITHUB_ACTOR }}
           GITHUB_MAVEN_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
