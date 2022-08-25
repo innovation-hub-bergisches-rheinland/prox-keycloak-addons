@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "de.innovationhub.prox.keycloak.kafka.data";
+option java_outer_classname = "EventData";
+
+// As per https://www.keycloak.org/docs-api/13.0/javadocs/org/keycloak/events/Event.html
+message Event {
+  // Event Types are too large, unstable and may change over time. Therefore, we
+  // do not use enums for the event types, instead using their textual representation.
+  // https://www.keycloak.org/docs-api/13.0/javadocs/org/keycloak/events/EventType.html
+  string type = 1;
+
+  optional string realm_id = 2;
+  optional string ip_address = 3;
+  optional string client_id = 4;
+  optional string session_id = 5;
+  optional string user_id = 6;
+
+  optional string error = 7;
+
+  map<string, string> details = 10;
+}
