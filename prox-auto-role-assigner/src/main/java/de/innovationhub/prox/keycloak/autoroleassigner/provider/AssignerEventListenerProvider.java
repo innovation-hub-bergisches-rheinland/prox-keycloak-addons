@@ -13,24 +13,17 @@ import org.keycloak.models.RealmModel;
 
 public class AssignerEventListenerProvider implements EventListenerProvider {
 
-  private final static Logger log = Logger.getLogger(AssignerEventListenerProvider.class);
-  private final RealmModel realmModel;
+  private static final Logger log = Logger.getLogger(AssignerEventListenerProvider.class);
   private final KeycloakSession keycloakSession;
-  private final static String REALM_ID = "innovation-hub-bergisches-rheinland";
+  private static final String REALM_ID = "innovation-hub-bergisches-rheinland";
 
   public AssignerEventListenerProvider(KeycloakSession keycloakSession) {
-    this.realmModel = keycloakSession.realms().getRealm(REALM_ID);
     this.keycloakSession = keycloakSession;
-
-    if (this.realmModel == null) {
-      log.error("Realm ' " + REALM_ID + "' not found");
-      throw new IllegalArgumentException("Realm ' " + REALM_ID + "' not found");
-    }
   }
 
   @Override
   public void onEvent(Event event) {
-    if (event.getRealmId().equalsIgnoreCase(this.realmModel.getId())) {
+    if (event.getRealmId().equalsIgnoreCase(REALM_ID)) {
       log.debug("Detected event " + event.getType() + " in realm");
       log.debug(KeycloakUtils.eventToString(event));
 

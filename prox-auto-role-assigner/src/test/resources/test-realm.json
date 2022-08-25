@@ -1,0 +1,15 @@
+{
+  "realm": "innovation-hub-bergisches-rheinland",
+  "enabled": true,
+  "groups": [
+    {
+      "id": "8faa870a-00da-4ac6-9768-84999a79da27",
+      "name": "professor",
+      "path": "/professor",
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {},
+      "subGroups": []
+    }
+  ]
+}

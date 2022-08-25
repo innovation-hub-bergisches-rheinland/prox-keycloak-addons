@@ -10,10 +10,14 @@ import org.keycloak.models.KeycloakSessionFactory;
 public class AssignerEventListenerProviderFactory implements EventListenerProviderFactory {
 
   private final static Logger log = Logger.getLogger(AssignerEventListenerProviderFactory.class);
+  private AssignerEventListenerProvider instance;
 
   @Override
   public EventListenerProvider create(KeycloakSession keycloakSession) {
-    return new AssignerEventListenerProvider(keycloakSession);
+    if(instance == null) {
+      instance = new AssignerEventListenerProvider(keycloakSession);
+    }
+    return instance;
   }
 
   @Override
