@@ -5,15 +5,20 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
 class AutoRoleAssignerIntegrationTest {
   static final String TEST_REALM = "innovation-hub-bergisches-rheinland";
+  static final Logger LOGGER = LoggerFactory.getLogger(AutoRoleAssignerIntegrationTest.class);
 
   @Container
   KeycloakContainer keycloakContainer = new KeycloakContainer()
+    .withLogConsumer(new Slf4jLogConsumer(LOGGER))
     .withProviderClassesFrom("target/classes")
     .withRealmImportFile("test-realm.json");
 
