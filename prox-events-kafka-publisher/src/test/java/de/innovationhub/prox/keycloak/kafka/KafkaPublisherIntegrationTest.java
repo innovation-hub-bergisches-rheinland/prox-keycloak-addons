@@ -1,19 +1,14 @@
 package de.innovationhub.prox.keycloak.kafka;
 
 import static io.restassured.RestAssured.given;
-import static io.restassured.RestAssured.when;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import com.google.protobuf.DynamicMessage;
-import com.google.protobuf.InvalidProtocolBufferException;
 import dasniko.testcontainers.keycloak.KeycloakContainer;
 import de.innovationhub.prox.keycloak.kafka.data.AdminEvent;
-import de.innovationhub.prox.keycloak.kafka.data.AdminEventData;
 import de.innovationhub.prox.keycloak.kafka.data.Event;
 import de.innovationhub.prox.keycloak.kafka.data.OperationType;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
-import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -23,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.http.entity.ContentType;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
@@ -32,9 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.ClientRepresentation;
-import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
-import org.keycloak.representations.idm.UserRepresentation;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -147,8 +139,8 @@ class KafkaPublisherIntegrationTest {
   }
 
   @Test
-  void shouldPublishAdminEvent() throws InvalidProtocolBufferException {
-    Consumer<String, DynamicMessage> consumer = buildConsumer();
+  void shouldPublishAdminEvent() {
+    Consumer<String, AdminEvent> consumer = buildConsumer();
     consumer.subscribe(List.of(KAFKA_ADMIN_TOPIC));
     consumer.seekToBeginning(consumer.assignment());
 
@@ -170,7 +162,7 @@ class KafkaPublisherIntegrationTest {
 
         var records = consumer.poll(Duration.of(1000, TimeUnit.MILLISECONDS.toChronoUnit()));
         for(var record : records) {
-          var adminEvent = AdminEvent.parseFrom(record.value().toByteArray());
+          var adminEvent = record.value();
           if(adminEvent.getOperationType() == OperationType.CREATE) {
             groupEvent = adminEvent;
             i = -1;
@@ -189,8 +181,8 @@ class KafkaPublisherIntegrationTest {
   }
 
   @Test
-  void shouldPublishEvent() throws InvalidProtocolBufferException {
-    Consumer<String, DynamicMessage> consumer = buildConsumer();
+  void shouldPublishEvent() {
+    Consumer<String, Event> consumer = buildConsumer();
     consumer.subscribe(List.of(KAFKA_TOPIC));
     consumer.seekToBeginning(consumer.assignment());
 
@@ -229,7 +221,7 @@ class KafkaPublisherIntegrationTest {
 
         var records = consumer.poll(Duration.of(1000, TimeUnit.MILLISECONDS.toChronoUnit()));
         for(var record : records) {
-          var event = Event.parseFrom(record.value().toByteArray());
+          var event = record.value();
           if(event.getType().equals("CLIENT_LOGIN")) {
             clientLoginEvent = event;
             i = 0;
@@ -248,15 +240,16 @@ class KafkaPublisherIntegrationTest {
     assertThat(clientLoginEvent).isNotNull();
   }
 
-  Consumer<String, DynamicMessage> buildConsumer() {
-    return new KafkaConsumer<String, DynamicMessage>(
+  <K, V> Consumer<K, V> buildConsumer() {
+    return new KafkaConsumer<>(
       Map.of(
         ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, REDPANDA_CONTAINER.getHost() + ":" + REDPANDA_CONTAINER.getMappedPort(9092),
         ConsumerConfig.GROUP_ID_CONFIG, "test-consumer",
         ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
         ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName(),
         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaProtobufDeserializer.class.getName(),
-        "schema.registry.url", "http://" + REDPANDA_CONTAINER.getHost() + ":" + REDPANDA_CONTAINER.getMappedPort(8081)
+        "schema.registry.url", "http://" + REDPANDA_CONTAINER.getHost() + ":" + REDPANDA_CONTAINER.getMappedPort(8081),
+        "derive.type", "true"
       )
     );
   }
