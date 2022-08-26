@@ -4,7 +4,7 @@
 
     <groupId>de.innovation-hub.prox</groupId>
     <artifactId>keycloak-addons</artifactId>
-    <version>1.0.5-SNAPSHOT</version>
+    <version>1.0.5</version>
     <packaging>pom</packaging>
     <name>keycloak-addons</name>
 
@@ -23,7 +23,7 @@
         <connection>scm:git:git@github.com:innovation-hub-bergisches-rheinland/prox-keycloak-addons.git</connection>
         <url>scm:git:git@github.com:innovation-hub-bergisches-rheinland/prox-keycloak-addons.git</url>
         <developerConnection>scm:git:git@github.com:innovation-hub-bergisches-rheinland/prox-keycloak-addons.git</developerConnection>
-      <tag>v1.0.2</tag>
+      <tag>v1.0.5</tag>
   </scm>
 
     <modules>
