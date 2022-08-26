@@ -19,10 +19,14 @@ public class KafkaProducerFactory {
 
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer);
     props.put(ProducerConfig.CLIENT_ID_CONFIG, clientId);
-    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaProtobufSerializer.class);
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaProtobufSerializer.class.getName());
 
     optionalProperties.forEach(props::put);
+
+    // fix Class org.apache.kafka.common.serialization.StringSerializer could not be
+    // found. see https://stackoverflow.com/a/50981469
+    Thread.currentThread().setContextClassLoader(null);
 
     return new KafkaProducer<>(props);
   }
