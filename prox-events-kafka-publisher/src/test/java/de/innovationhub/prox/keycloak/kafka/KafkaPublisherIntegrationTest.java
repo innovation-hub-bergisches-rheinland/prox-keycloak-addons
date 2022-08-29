@@ -5,11 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import dasniko.testcontainers.keycloak.KeycloakContainer;
-import de.innovationhub.prox.keycloak.kafka.data.AdminEvent;
-import de.innovationhub.prox.keycloak.kafka.data.Event;
-import de.innovationhub.prox.keycloak.kafka.data.OperationType;
-import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
@@ -25,6 +22,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.events.Event;
+import org.keycloak.events.EventType;
+import org.keycloak.events.admin.AdminEvent;
+import org.keycloak.events.admin.OperationType;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.testcontainers.containers.GenericContainer;
@@ -32,6 +33,7 @@ import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testcontainers.utility.ComparableVersion;
 import org.testcontainers.utility.DockerImageName;
 
@@ -54,7 +56,7 @@ class KafkaPublisherIntegrationTest {
 
     List<File> dependencies = Maven.resolver()
       .loadPomFromFile("./pom.xml")
-      .resolve("com.google.protobuf:protobuf-java", "io.confluent:kafka-protobuf-serializer", "org.apache.kafka:kafka-clients")
+      .resolve("org.apache.kafka:kafka-clients")
       .withTransitivity().asList(File.class);
     KEYCLOAK_CONTAINER = new KeycloakContainer()
       .withLogConsumer(of -> System.out.println(of.getUtf8String()))
@@ -65,8 +67,7 @@ class KafkaPublisherIntegrationTest {
           "KAFKA_TOPIC", KAFKA_TOPIC,
           "KAFKA_ADMIN_TOPIC", KAFKA_ADMIN_TOPIC,
           "KAFKA_BOOTSTRAP_SERVERS",  "redpanda:29092",
-          "KAFKA_CLIENT_ID", "event-publisher-test",
-          "SCHEMA_REGISTRY_URL", "http://redpanda:8081"
+          "KAFKA_CLIENT_ID", "event-publisher-test"
         ))
       .withProviderClassesFrom("target/classes")
       .withProviderLibsFrom(dependencies)
@@ -139,8 +140,8 @@ class KafkaPublisherIntegrationTest {
   }
 
   @Test
-  void shouldPublishAdminEvent() {
-    Consumer<String, AdminEvent> consumer = buildConsumer();
+  void shouldPublishAdminEvent() throws IOException {
+    Consumer<String, String> consumer = buildConsumer();
     consumer.subscribe(List.of(KAFKA_ADMIN_TOPIC));
     consumer.seekToBeginning(consumer.assignment());
 
@@ -153,6 +154,7 @@ class KafkaPublisherIntegrationTest {
     realm.groups().add(groupRepresentation);
 
     AdminEvent groupEvent = null;
+    var objectMapper = new ObjectMapper();
     int i = 30;
     try {
       while(i >= 0) {
@@ -162,7 +164,7 @@ class KafkaPublisherIntegrationTest {
 
         var records = consumer.poll(Duration.of(1000, TimeUnit.MILLISECONDS.toChronoUnit()));
         for(var record : records) {
-          var adminEvent = record.value();
+          var adminEvent = objectMapper.readValue(record.value(), AdminEvent.class);
           if(adminEvent.getOperationType() == OperationType.CREATE) {
             groupEvent = adminEvent;
             i = -1;
@@ -181,8 +183,8 @@ class KafkaPublisherIntegrationTest {
   }
 
   @Test
-  void shouldPublishEvent() {
-    Consumer<String, Event> consumer = buildConsumer();
+  void shouldPublishEvent() throws IOException {
+    Consumer<String, String> consumer = buildConsumer();
     consumer.subscribe(List.of(KAFKA_TOPIC));
     consumer.seekToBeginning(consumer.assignment());
 
@@ -212,6 +214,7 @@ class KafkaPublisherIntegrationTest {
 
 
     Event clientLoginEvent = null;
+    var objectMapper = new ObjectMapper();
     int i = 30;
     try {
       while(i >= 0) {
@@ -221,10 +224,9 @@ class KafkaPublisherIntegrationTest {
 
         var records = consumer.poll(Duration.of(1000, TimeUnit.MILLISECONDS.toChronoUnit()));
         for(var record : records) {
-          var event = record.value();
-          if(event.getType().equals("CLIENT_LOGIN")) {
+          var event = objectMapper.readValue(record.value(), Event.class);
+          if(event.getType() == EventType.CLIENT_LOGIN) {
             clientLoginEvent = event;
-            i = 0;
             i = -1;
             break;
           }
@@ -247,11 +249,8 @@ class KafkaPublisherIntegrationTest {
         ConsumerConfig.GROUP_ID_CONFIG, "test-consumer",
         ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
         ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName(),
-        ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaProtobufDeserializer.class.getName(),
-        "schema.registry.url", "http://" + REDPANDA_CONTAINER.getHost() + ":" + REDPANDA_CONTAINER.getMappedPort(8081),
-        "derive.type", "true"
-      )
-    );
+        ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName()
+    ));
   }
 
 }

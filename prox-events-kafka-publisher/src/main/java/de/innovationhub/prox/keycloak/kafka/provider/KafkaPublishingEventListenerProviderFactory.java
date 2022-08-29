@@ -2,7 +2,6 @@ package de.innovationhub.prox.keycloak.kafka.provider;
 
 import de.innovationhub.prox.keycloak.kafka.KafkaProducerFactory;
 import java.util.Map;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.jboss.logging.Logger;
 import org.keycloak.Config.Scope;
 import org.keycloak.events.EventListenerProvider;
@@ -17,7 +16,6 @@ public class KafkaPublishingEventListenerProviderFactory implements EventListene
   private String topicEvents;
   private String topicAdminEvents;
   private String clientId;
-  private String schemaRegistryUrl;
 
   private KafkaPublishingEventListenerProvider instance;
 
@@ -28,9 +26,7 @@ public class KafkaPublishingEventListenerProviderFactory implements EventListene
         clientId,
         topicEvents,
         topicAdminEvents,
-        Map.of(
-          "schema.registry.url", schemaRegistryUrl
-        ),
+        Map.of(),
         new KafkaProducerFactory());
     }
 
@@ -43,7 +39,6 @@ public class KafkaPublishingEventListenerProviderFactory implements EventListene
     clientId = scope.get("clientId", System.getenv("KAFKA_CLIENT_ID"));
     bootstrapServers = scope.get("bootstrapServers", System.getenv("KAFKA_BOOTSTRAP_SERVERS"));
     topicAdminEvents = scope.get("topicAdminEvents", System.getenv("KAFKA_ADMIN_TOPIC"));
-    schemaRegistryUrl = scope.get("schemaRegistryUrl", System.getenv("SCHEMA_REGISTRY_URL"));
   }
 
   @Override

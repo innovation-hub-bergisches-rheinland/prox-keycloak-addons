@@ -12,7 +12,7 @@ in PROX are assigned once a user verifies a E-Mail address from a TH Köln Domai
 ### Kafka Event Publisher
 
 Automatically publishes Keycloak events to Kafka. Needs the following Environment variables in
-Keycloak. Events will be serialized to Protobuf.
+Keycloak. Events will be serialized to JSON.
 
 | Variable | Description                    |
 | -------- |--------------------------------|
@@ -20,7 +20,6 @@ Keycloak. Events will be serialized to Protobuf.
 | KAFKA_CLIENT_ID | Producer Client ID      |
 | KAFKA_BOOTSTRAP_SERVERS | Kafka Servers   |
 | KAFKA_ADMIN_TOPIC | Topic for Admin Events|
-| SCHEMA_REGISTRY_URL | Schema registry URL |
 
 ## Release
 

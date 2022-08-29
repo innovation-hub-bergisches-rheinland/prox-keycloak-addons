@@ -23,7 +23,7 @@
         <connection>scm:git:git@github.com:innovation-hub-bergisches-rheinland/prox-keycloak-addons.git</connection>
         <url>scm:git:git@github.com:innovation-hub-bergisches-rheinland/prox-keycloak-addons.git</url>
         <developerConnection>scm:git:git@github.com:innovation-hub-bergisches-rheinland/prox-keycloak-addons.git</developerConnection>
-      <tag>v1.0.2</tag>
+      <tag>v2.0.0</tag>
   </scm>
 
     <modules>
