@@ -28,7 +28,8 @@ public class AssignerEventListenerProvider implements EventListenerProvider {
 
   @Override
   public void onEvent(Event event) {
-    log.debug("onEvent: " + event.getType());
+    log.debug("onEvent: " + event.toString());
+
     this.tx.addEvent(event);
   }
 

@@ -91,6 +91,8 @@ class AutoRoleAssignerIntegrationTest {
     var lSplit = response.getHeaderString("Location").split("/");
     var userId = lSplit[lSplit.length - 1];
 
+    // TODO: Register instead of sending verification mail
+
     // Send a verification mail to him
     var user = adminClient.realm(TEST_REALM).users().get(userId);
     user.sendVerifyEmail();
