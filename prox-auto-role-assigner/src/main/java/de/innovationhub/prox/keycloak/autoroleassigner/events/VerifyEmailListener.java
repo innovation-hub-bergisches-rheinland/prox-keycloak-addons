@@ -39,6 +39,7 @@ public class VerifyEmailListener  implements EventListener {
       return;
     }
 
+    keycloakSession.getTransactionManager().begin();
     log.debug("User " + userId + " verified college email account '" + email + "', assigning professor group");
     var user = keycloakSession.users().getUserById(realm, userId.toString());
 
@@ -57,6 +58,7 @@ public class VerifyEmailListener  implements EventListener {
     try {
       user.joinGroup(professorGroup.get());
       log.debug("User " + userId + " was successfully assigned to professor group");
+      keycloakSession.getTransactionManager().commit();
     } catch (Exception e) {
       log.error("Couldn't asign user to professor group", e);
     }
