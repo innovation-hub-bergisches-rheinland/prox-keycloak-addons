@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.events.EventType;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -59,6 +60,7 @@ class AutoRoleAssignerIntegrationTest {
     // First we need to enable our addon
     var eventConfig = realm.getRealmEventsConfig();
     eventConfig.setEventsListeners(List.of("prox-auto-role-assigner"));
+    eventConfig.setEnabledEventTypes(List.of(EventType.VERIFY_EMAIL.name()));
     realm.updateRealmEventsConfig(eventConfig);
   }
 
