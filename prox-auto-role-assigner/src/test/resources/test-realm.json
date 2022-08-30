@@ -12,6 +12,20 @@
       "subGroups": []
     }
   ],
+  "eventsEnabled": false,
+  "eventsExpiration": 86400,
+  "eventsListeners": [
+    "prox-auto-role-assigner",
+    "jboss-logging"
+  ],
+  "enabledEventTypes": [
+    "VERIFY_EMAIL",
+    "SEND_VERIFY_EMAIL",
+    "SEND_VERIFY_EMAIL_ERROR",
+    "VERIFY_EMAIL_ERROR"
+  ],
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": false,
   "smtpServer": {
     "password": "s3cr3t",
     "starttls": "false",

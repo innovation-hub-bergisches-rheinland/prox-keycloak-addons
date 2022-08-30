@@ -44,24 +44,7 @@ public class VerifyEmailListener  implements EventListener {
       + "', assigning professor group");
 
     // If we don't have a transaction yet, create one
-    boolean createdTransaction = false;
-    if(!this.keycloakSession.getTransactionManager().isActive()) {
-      log.debug("No transacation active, beginning one");
-      this.keycloakSession.getTransactionManager().begin();
-      createdTransaction = true;
-    }
-    try {
-      assignGroup(realm, userId);
-
-      this.keycloakSession.getTransactionManager().commit();
-    } catch (Exception e) {
-      log.errorf(e, "Could not assign group");
-
-      // Rollback transaction on error
-      if(createdTransaction) {
-        this.keycloakSession.getTransactionManager().rollback();
-      }
-    }
+    assignGroup(realm, userId);
   }
 
   private void assignGroup(RealmModel realm, String userId) {
@@ -72,7 +55,7 @@ public class VerifyEmailListener  implements EventListener {
       return;
     }
 
-    GroupProvider groupProvider = keycloakSession.groups();
+    GroupProvider groupProvider = this.keycloakSession.groups();
     Optional<GroupModel> professorGroup = groupProvider.getGroupsStream(realm)
       .filter(g -> g.getName().equalsIgnoreCase("professor")).findFirst();
 

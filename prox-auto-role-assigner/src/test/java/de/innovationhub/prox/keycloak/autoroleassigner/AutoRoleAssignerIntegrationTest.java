@@ -58,10 +58,10 @@ class AutoRoleAssignerIntegrationTest {
     RealmResource realm = adminClient.realm(TEST_REALM);
 
     // First we need to enable our addon
-    var eventConfig = realm.getRealmEventsConfig();
+    /*var eventConfig = realm.getRealmEventsConfig();
     eventConfig.setEventsListeners(List.of("prox-auto-role-assigner"));
     eventConfig.setEnabledEventTypes(List.of(EventType.VERIFY_EMAIL.name()));
-    realm.updateRealmEventsConfig(eventConfig);
+    realm.updateRealmEventsConfig(eventConfig);*/
   }
 
   // It is really hard to integration test this addon as it requires the VERIFY_EMAIL addon to be
@@ -73,7 +73,7 @@ class AutoRoleAssignerIntegrationTest {
 
 
   /*TODO: For whatever reason this test does not trigger the event.*/
-  /*@Test
+  @Test
   void shouldAssignProfessorGroup() throws MalformedURLException {
     Keycloak adminClient = KEYCLOAK_CONTAINER.getKeycloakAdminClient();
 
@@ -130,5 +130,5 @@ class AutoRoleAssignerIntegrationTest {
 
     assertThat(user.groups())
       .anyMatch(g -> g.getName().equals("professor"));
-  }*/
+  }
 }
