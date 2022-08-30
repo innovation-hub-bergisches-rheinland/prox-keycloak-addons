@@ -1,9 +1,12 @@
 package de.innovationhub.prox.keycloak.autoroleassigner.events;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.jboss.logging.Logger;
 import org.keycloak.events.Event;
+import org.keycloak.models.GroupModel;
+import org.keycloak.models.GroupProvider;
 import org.keycloak.models.KeycloakSession;
 
 public class VerifyEmailListener  implements EventListener {
@@ -20,47 +23,68 @@ public class VerifyEmailListener  implements EventListener {
   public void onAction(Event event) {
     var realm = keycloakSession.getContext().getRealm();
 
-    if(!realm.getId().equals(event.getRealmId())) {
+    if (!realm.getId().equals(event.getRealmId())) {
       // Not our realm
-      log.debugf("Event and session realm not matching (Event Realm: %s, Session realm: %s)", event.getRealmId(), realm.getId());
+      log.debugf("Event and session realm not matching (Event Realm: %s, Session realm: %s)",
+        event.getRealmId(), realm.getId());
       return;
     }
 
     var userId = UUID.fromString(event.getUserId());
     var email = event.getDetails().get("email");
 
-    if(email == null || email.isBlank()) {
+    if (email == null || email.isBlank()) {
       log.debug("No email found in event");
       return;
     }
 
-    if(PROFESSOR_EMAIL_PATTERNS.stream().noneMatch(email::endsWith)) {
+    if (PROFESSOR_EMAIL_PATTERNS.stream().noneMatch(email::endsWith)) {
       log.trace("Not an email from TH-Koeln or FH-Koeln");
       return;
     }
 
-    keycloakSession.getTransactionManager().begin();
-    log.debug("User " + userId + " verified college email account '" + email + "', assigning professor group");
-    var user = keycloakSession.users().getUserById(realm, userId.toString());
-
-    if(user == null) {
-      log.error("Could not assign group to user, user could not be found");
-      return;
-    }
-
-    var professorGroup = keycloakSession.groups().getGroupsStream(realm).filter(g -> g.getName().equalsIgnoreCase("professor")).findFirst();
-
-    if(professorGroup.isEmpty()) {
-      log.error("Could not assign group to user, group could not be found");
-      return;
-    }
-
+    var tx = keycloakSession.getTransactionManager();
     try {
+      if(!tx.isActive()) {
+        tx.begin();
+      } else {
+        log.debug("Transaction already active");
+      }
+
+      log.debug("User " + userId + " verified college email account '" + email
+        + "', assigning professor group");
+      var user = keycloakSession.users().getUserById(realm, userId.toString());
+
+      if (user == null) {
+        log.error("Could not assign group to user, user could not be found");
+        tx.setRollbackOnly();
+        return;
+      }
+
+      GroupProvider groupProvider = getGroupProvider();
+      Optional<GroupModel> professorGroup = groupProvider.getGroupsStream(realm)
+        .filter(g -> g.getName().equalsIgnoreCase("professor")).findFirst();
+
+      if (professorGroup.isEmpty()) {
+        log.error("Could not assign group to user, group could not be found");
+        tx.setRollbackOnly();
+        return;
+      }
       user.joinGroup(professorGroup.get());
       log.debug("User " + userId + " was successfully assigned to professor group");
-      keycloakSession.getTransactionManager().commit();
     } catch (Exception e) {
       log.error("Couldn't asign user to professor group", e);
+    } finally {
+      tx.commit();
+    }
+  }
+
+  private GroupProvider getGroupProvider() {
+    try {
+      return keycloakSession.groups();
+    } catch (IllegalStateException e) {
+      log.warn("There is no transaction available. Bypassing cache now...", e);
+      return keycloakSession.groupStorageManager();
     }
   }
 }
