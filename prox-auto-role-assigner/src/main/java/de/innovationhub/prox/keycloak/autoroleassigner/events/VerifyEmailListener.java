@@ -75,7 +75,11 @@ public class VerifyEmailListener  implements EventListener {
     } catch (Exception e) {
       log.error("Couldn't asign user to professor group", e);
     } finally {
-      tx.commit();
+      if(tx.getRollbackOnly()) {
+        tx.rollback();
+      } else {
+        tx.commit();
+      }
     }
   }
 
