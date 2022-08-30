@@ -21,14 +21,17 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.slf4j.Logger;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
 class AutoRoleAssignerIntegrationTest {
   static final String TEST_REALM = "innovation-hub-bergisches-rheinland";
+  static final Logger log = org.slf4j.LoggerFactory.getLogger(AutoRoleAssignerIntegrationTest.class);
 
   static final GenericContainer<?> MAILHOG_CONTAINER;
   static final KeycloakContainer KEYCLOAK_CONTAINER;
@@ -44,9 +47,10 @@ class AutoRoleAssignerIntegrationTest {
         .waitingFor(Wait.forLogMessage(".*Creating API v2 with WebPath:.*", 1));
     MAILHOG_CONTAINER.start();
 
-    KEYCLOAK_CONTAINER = new KeycloakContainer()
+    KEYCLOAK_CONTAINER = new KeycloakContainer("quay.io/keycloak/keycloak:19.0.1-legacy")
       .withProviderClassesFrom("target/classes")
       .withNetwork(network)
+      .withLogConsumer(new Slf4jLogConsumer(log))
       .withNetworkAliases("keycloak")
       .withRealmImportFile("test-realm.json");
     KEYCLOAK_CONTAINER.start();
@@ -128,7 +132,10 @@ class AutoRoleAssignerIntegrationTest {
 
     driver.quit();
 
-    assertThat(user.groups())
-      .anyMatch(g -> g.getName().equals("professor"));
+    var userResource = adminClient.realm(TEST_REALM).users().get(userId);
+    var actualUser = userResource.toRepresentation();
+    assertThat(actualUser.isEmailVerified()).isTrue();
+    assertThat(userResource.groups())
+      .anyMatch(group -> group.getName().equals("professor"));
   }
 }
