@@ -11,5 +11,16 @@
       "clientRoles": {},
       "subGroups": []
     }
-  ]
+  ],
+  "smtpServer": {
+    "password": "s3cr3t",
+    "starttls": "false",
+    "port": "1025",
+    "auth": "true",
+    "host": "mailhog",
+    "from": "admin@keycloak",
+    "fromDisplayName": "Test Keycloak",
+    "ssl": "false",
+    "user": "john.doe"
+  }
 }

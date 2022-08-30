@@ -16,6 +16,7 @@ public class AssignerEventListenerProviderFactory implements EventListenerProvid
   public EventListenerProvider create(KeycloakSession keycloakSession) {
     if(instance == null) {
       instance = new AssignerEventListenerProvider(keycloakSession);
+      log.info("Created AssignerEventListenerProvider");
     }
     return instance;
   }

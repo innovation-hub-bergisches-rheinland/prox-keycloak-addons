@@ -22,6 +22,7 @@ public class VerifyEmailListener  implements EventListener {
 
     if(realm.getId().equals(event.getRealmId())) {
       // Not our realm
+      log.debugf("Event and session realm not matching (Event Realm: %s, Session realm: %s)", event.getRealmId(), realm.getId());
       return;
     }
 
