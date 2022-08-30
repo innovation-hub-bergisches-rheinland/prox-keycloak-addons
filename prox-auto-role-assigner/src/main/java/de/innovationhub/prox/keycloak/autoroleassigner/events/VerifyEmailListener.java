@@ -47,7 +47,7 @@ public class VerifyEmailListener  implements EventListener {
       return;
     }
 
-    var professorGroup = realm.getGroupsStream().filter(g -> g.getName().equalsIgnoreCase("professor")).findFirst();
+    var professorGroup = keycloakSession.groups().getGroupsStream(realm).filter(g -> g.getName().equalsIgnoreCase("professor")).findFirst();
 
     if(professorGroup.isEmpty()) {
       log.error("Could not assign group to user, group could not be found");
