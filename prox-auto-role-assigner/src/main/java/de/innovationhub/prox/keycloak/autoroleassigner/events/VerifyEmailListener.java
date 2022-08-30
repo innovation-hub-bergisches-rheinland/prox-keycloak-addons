@@ -20,7 +20,7 @@ public class VerifyEmailListener  implements EventListener {
   public void onAction(Event event) {
     var realm = keycloakSession.getContext().getRealm();
 
-    if(realm.getId().equals(event.getRealmId())) {
+    if(!realm.getId().equals(event.getRealmId())) {
       // Not our realm
       log.debugf("Event and session realm not matching (Event Realm: %s, Session realm: %s)", event.getRealmId(), realm.getId());
       return;

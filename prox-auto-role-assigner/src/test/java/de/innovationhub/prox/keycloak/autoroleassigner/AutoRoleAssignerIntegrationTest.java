@@ -69,9 +69,9 @@ class AutoRoleAssignerIntegrationTest {
   void isDeployable() {
   }
 
-  /*
-  TODO: For whatever reason this test does not trigger the event.
-  @Test
+
+  /*TODO: For whatever reason this test does not trigger the event.*/
+  /*@Test
   void shouldAssignProfessorGroup() throws MalformedURLException {
     Keycloak adminClient = KEYCLOAK_CONTAINER.getKeycloakAdminClient();
 
