@@ -23,7 +23,7 @@ public class AssignerEventListenerProvider implements EventListenerProvider {
   public AssignerEventListenerProvider(KeycloakSession keycloakSession) {
     this.keycloakSession = keycloakSession;
     this.tx = new EventListenerTransaction(null, this::onAction);
-    keycloakSession.getTransactionManager().enlistAfterCompletion(tx);
+    keycloakSession.getTransactionManager().enlist(tx);
   }
 
   @Override
