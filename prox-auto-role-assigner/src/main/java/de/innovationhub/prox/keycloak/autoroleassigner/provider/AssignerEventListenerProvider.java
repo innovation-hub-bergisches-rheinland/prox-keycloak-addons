@@ -34,7 +34,8 @@ public class AssignerEventListenerProvider implements EventListenerProvider {
 
     if(event.getType() == EventType.VERIFY_EMAIL) {
       log.debug("Scheduling Assignment transaction");
-      this.tx.addEvent(event);
+      this.onAction(event);
+      // this.tx.addEvent(event);
     }
   }
 
