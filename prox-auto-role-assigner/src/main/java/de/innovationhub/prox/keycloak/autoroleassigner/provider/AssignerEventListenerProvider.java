@@ -19,12 +19,12 @@ public class AssignerEventListenerProvider implements EventListenerProvider {
   private static final Logger log = Logger.getLogger(AssignerEventListenerProvider.class);
   private final KeycloakSession keycloakSession;
   private static final List<String> PROFESSOR_EMAIL_PATTERNS = List.of("@th-koeln.de", "@fh-koeln.de");
-  private final EventListenerTransaction tx;
+  // private final EventListenerTransaction tx;
 
   public AssignerEventListenerProvider(KeycloakSession keycloakSession) {
     this.keycloakSession = keycloakSession;
-    this.tx = new EventListenerTransaction(null, this::onAction);
-    keycloakSession.getTransactionManager().enlist(tx);
+    // this.tx = new EventListenerTransaction(null, this::onAction);
+    // keycloakSession.getTransactionManager().enlist(tx);
   }
 
   @Override
