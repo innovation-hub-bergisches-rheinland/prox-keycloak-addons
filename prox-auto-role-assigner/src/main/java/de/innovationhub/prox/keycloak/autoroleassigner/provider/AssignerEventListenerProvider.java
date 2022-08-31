@@ -30,6 +30,7 @@ public class AssignerEventListenerProvider implements EventListenerProvider {
   @Override
   public void onEvent(Event event) {
     log.debug("onEvent: " + KeycloakUtils.eventToString(event));
+    log.debug("Transaction state: " + this.keycloakSession.getTransactionManager().isActive());
 
     if(event.getType() == EventType.VERIFY_EMAIL) {
       log.debug("Scheduling Assignment transaction");
