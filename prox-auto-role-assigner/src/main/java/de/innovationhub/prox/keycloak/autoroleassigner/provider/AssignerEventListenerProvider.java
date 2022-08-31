@@ -1,5 +1,6 @@
 package de.innovationhub.prox.keycloak.autoroleassigner.provider;
 
+import de.innovationhub.prox.keycloak.autoroleassigner.utils.KeycloakUtils;
 import java.util.List;
 import java.util.Optional;
 import org.jboss.logging.Logger;
@@ -28,16 +29,15 @@ public class AssignerEventListenerProvider implements EventListenerProvider {
 
   @Override
   public void onEvent(Event event) {
-    log.debug("onEvent: " + event.toString());
+    log.debug("onEvent: " + KeycloakUtils.eventToString(event));
 
-    this.tx.addEvent(event);
+    if(event.getType() == EventType.VERIFY_EMAIL) {
+      log.debug("Scheduling Assignment transaction");
+      this.tx.addEvent(event);
+    }
   }
 
   private void onAction(Event event) {
-    if(event.getType() != EventType.VERIFY_EMAIL) {
-      return;
-    }
-
     var realm = keycloakSession.realms().getRealm(event.getRealmId());
 
     var email = event.getDetails().get("email");
