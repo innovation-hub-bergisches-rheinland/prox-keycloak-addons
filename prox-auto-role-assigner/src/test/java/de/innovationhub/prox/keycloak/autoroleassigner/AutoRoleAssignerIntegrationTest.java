@@ -10,6 +10,8 @@ import io.restassured.RestAssured;
 import io.restassured.filter.cookie.CookieFilter;
 import io.restassured.filter.session.SessionFilter;
 import java.net.MalformedURLException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +50,7 @@ class AutoRoleAssignerIntegrationTest {
         .waitingFor(Wait.forLogMessage(".*Creating API v2 with WebPath:.*", 1));
     MAILHOG_CONTAINER.start();
 
-    KEYCLOAK_CONTAINER = new KeycloakContainer("quay.io/keycloak/keycloak:19.0.1-legacy")
+    KEYCLOAK_CONTAINER = new KeycloakContainer("quay.io/keycloak/keycloak:19.0.1")
       .withProviderClassesFrom("target/classes")
       .withNetwork(network)
       .withLogConsumer(new Slf4jLogConsumer(log))
