@@ -86,6 +86,8 @@ class AutoRoleAssignerIntegrationTest {
     userRepresentation.setEmail("test@th-koeln.de");
     userRepresentation.setUsername("test");
     userRepresentation.setEnabled(true);
+    userRepresentation.setRequiredActions(List.of("VERIFY_EMAIL"));
+    userRepresentation.setEmailVerified(false);
     var response = adminClient.realm(TEST_REALM).users().create(userRepresentation);
     assertThat(response.getStatus()).isEqualTo(201);
     var lSplit = response.getHeaderString("Location").split("/");
