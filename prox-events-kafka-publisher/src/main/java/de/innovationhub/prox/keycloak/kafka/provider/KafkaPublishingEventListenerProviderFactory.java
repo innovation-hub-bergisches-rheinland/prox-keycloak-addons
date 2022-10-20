@@ -1,5 +1,6 @@
 package de.innovationhub.prox.keycloak.kafka.provider;
 
+import de.innovationhub.prox.keycloak.kafka.KafkaConfigurationProperties;
 import de.innovationhub.prox.keycloak.kafka.KafkaProducerFactory;
 import java.util.Map;
 import org.jboss.logging.Logger;
@@ -22,12 +23,12 @@ public class KafkaPublishingEventListenerProviderFactory implements EventListene
   @Override
   public EventListenerProvider create(KeycloakSession keycloakSession) {
     if (instance == null) {
-      instance = new KafkaPublishingEventListenerProvider(bootstrapServers,
-        clientId,
+      instance = new KafkaPublishingEventListenerProvider(
         topicEvents,
         topicAdminEvents,
-        Map.of(),
-        new KafkaProducerFactory());
+        new KafkaProducerFactory(
+          new KafkaConfigurationProperties(bootstrapServers, clientId, Map.of())
+        ));
     }
 
     return instance;

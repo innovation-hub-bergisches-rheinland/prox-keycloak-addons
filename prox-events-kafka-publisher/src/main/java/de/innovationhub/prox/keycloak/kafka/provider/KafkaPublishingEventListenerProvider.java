@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.innovationhub.prox.keycloak.kafka.KafkaConfigurationProperties;
 import de.innovationhub.prox.keycloak.kafka.KafkaProducerFactory;
+import de.innovationhub.prox.keycloak.kafka.ProducerNotAvailableException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -27,18 +28,15 @@ public class KafkaPublishingEventListenerProvider implements EventListenerProvid
   private final String topicEvents;
   private final String topicAdminEvents;
   private final ObjectMapper objectMapper;
-  private final KafkaConfigurationProperties kafkaConfigurationProperties;
   private final KafkaProducerFactory producerFactory;
 
-  public KafkaPublishingEventListenerProvider(String bootstrapServers, String clientId,
+  public KafkaPublishingEventListenerProvider(
     String topicEvents,
-    String topicAdminEvents, Map<String, Object> kafkaProducerProperties,
+    String topicAdminEvents,
     KafkaProducerFactory factory) {
     this.topicEvents = topicEvents;
     this.topicAdminEvents = topicAdminEvents;
     this.objectMapper = new ObjectMapper();
-    this.kafkaConfigurationProperties = new KafkaConfigurationProperties(bootstrapServers, clientId,
-      kafkaProducerProperties);
     this.producerFactory = factory;
   }
 
@@ -51,6 +49,8 @@ public class KafkaPublishingEventListenerProvider implements EventListenerProvid
     } catch (InterruptedException e) {
       LOGGER.error(e.getMessage(), e);
       Thread.currentThread().interrupt();
+    } catch (ProducerNotAvailableException e) {
+      LOGGER.error(e.getMessage(), e);
     }
   }
 
@@ -63,6 +63,8 @@ public class KafkaPublishingEventListenerProvider implements EventListenerProvid
     } catch (InterruptedException e) {
       LOGGER.error(e.getMessage(), e);
       Thread.currentThread().interrupt();
+    } catch (ProducerNotAvailableException e) {
+      LOGGER.error(e.getMessage(), e);
     }
   }
 
@@ -71,10 +73,20 @@ public class KafkaPublishingEventListenerProvider implements EventListenerProvid
 
   }
 
+  /**
+   *
+   * @param event
+   * @param topic
+   * @throws de.innovationhub.prox.keycloak.kafka.ProducerNotAvailableException
+   * @throws InterruptedException
+   * @throws ExecutionException
+   * @throws TimeoutException
+   */
   private void produceEvent(String event, String topic)
     throws InterruptedException, ExecutionException, TimeoutException {
-    try (var producer = this.producerFactory.createProducer(this.kafkaConfigurationProperties)) {
+    var producer = this.producerFactory.getProducer();
 
+    try {
       LOGGER.debugf("Producing event to topic '%s'", topic);
       ProducerRecord<String, String> record = new ProducerRecord<>(topic, event);
 
@@ -85,6 +97,7 @@ public class KafkaPublishingEventListenerProvider implements EventListenerProvid
     } catch (ProducerFencedException | OutOfOrderSequenceException | AuthorizationException e) {
       // We can't recover from these exceptions, so our only option is to close the producer and exit.
       LOGGER.error("Error producing event to Kafka", e);
+      this.producerFactory.closeProducer();
     } catch (KafkaException e) {
       // For all other exceptions, just abort the transaction and try again.
       LOGGER.error("Error producing event to Kafka", e);

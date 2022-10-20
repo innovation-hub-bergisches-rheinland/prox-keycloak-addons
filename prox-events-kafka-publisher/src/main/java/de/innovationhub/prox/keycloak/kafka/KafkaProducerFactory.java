@@ -5,19 +5,25 @@ import java.util.Properties;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 public class KafkaProducerFactory {
 
-  public Producer<String, String> createProducer(
-    KafkaConfigurationProperties configurationProperties
-  ) {
-    return createProducer(configurationProperties.getClientId(),
-      configurationProperties.getBootstrapServers(),
-      configurationProperties.getKafkaProducerProperties());
+  private Producer<String, String> producer;
+  private final KafkaConfigurationProperties configurationProperties;
+
+  public KafkaProducerFactory(KafkaConfigurationProperties configurationProperties) {
+    this.configurationProperties = configurationProperties;
   }
 
-  public Producer<String, String> createProducer(
+  private Producer<String, String> createProducer() {
+    return createProducer(this.configurationProperties.getClientId(),
+      this.configurationProperties.getBootstrapServers(),
+      this.configurationProperties.getKafkaProducerProperties());
+  }
+
+  private Producer<String, String> createProducer(
     String clientId,
     String bootstrapServer,
     Map<String, Object> optionalProperties
@@ -37,5 +43,27 @@ public class KafkaProducerFactory {
     Thread.currentThread().setContextClassLoader(null);
 
     return new KafkaProducer<>(props);
+  }
+
+  /**
+   * Gets managed producer
+   * @return producer instance
+   * @throws ProducerNotAvailableException if no producer is available and cannot be built
+   */
+  public Producer<String, String> getProducer() {
+    if(this.producer != null) {
+      return this.producer;
+    }
+
+    try {
+      return this.createProducer();
+    } catch (KafkaException e) {
+      throw new ProducerNotAvailableException();
+    }
+  }
+
+  public void closeProducer() {
+    this.producer.close();
+    this.producer = null;
   }
 }
