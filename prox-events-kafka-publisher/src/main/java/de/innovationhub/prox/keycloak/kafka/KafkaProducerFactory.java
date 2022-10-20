@@ -8,6 +8,15 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 public class KafkaProducerFactory {
+
+  public Producer<String, String> createProducer(
+    KafkaConfigurationProperties configurationProperties
+  ) {
+    return createProducer(configurationProperties.getClientId(),
+      configurationProperties.getBootstrapServers(),
+      configurationProperties.getKafkaProducerProperties());
+  }
+
   public Producer<String, String> createProducer(
     String clientId,
     String bootstrapServer,
