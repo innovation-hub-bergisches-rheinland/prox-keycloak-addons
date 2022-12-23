@@ -1,4 +1,4 @@
-package de.innovationhub.prox.keycloak.kafka;
+package de.innovationhub.prox.keycloak.redis;
 
 public class ProducerNotAvailableException extends RuntimeException {
 

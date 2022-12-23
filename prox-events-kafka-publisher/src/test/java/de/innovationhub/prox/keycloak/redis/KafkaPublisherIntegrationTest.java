@@ -1,4 +1,4 @@
-package de.innovationhub.prox.keycloak.kafka;
+package de.innovationhub.prox.keycloak.redis;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
