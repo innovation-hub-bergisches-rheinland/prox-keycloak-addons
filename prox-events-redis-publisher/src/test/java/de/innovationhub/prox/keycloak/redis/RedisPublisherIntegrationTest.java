@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.http.entity.ContentType;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
@@ -88,6 +89,7 @@ class RedisPublisherIntegrationTest {
   }
 
   @Test
+  @Disabled("Flaky")
   void shouldPublishAdminEvent() throws IOException, InterruptedException {
     var queue = new LinkedBlockingQueue<String>();
     var pubSub = new JedisPubSub() {
@@ -128,6 +130,7 @@ class RedisPublisherIntegrationTest {
   }
 
   @Test
+  @Disabled("Flaky")
   void shouldPublishEvent() throws Exception {
 
     var queue = new LinkedBlockingQueue<String>();
