@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import org.apache.http.entity.ContentType;
@@ -21,6 +23,7 @@ import org.keycloak.events.Event;
 import org.keycloak.events.EventType;
 import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.events.admin.OperationType;
+import org.keycloak.events.admin.ResourceType;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.testcontainers.containers.GenericContainer;
@@ -55,7 +58,7 @@ class RedisPublisherIntegrationTest {
       .withCommand("redis-server /usr/local/etc/redis/redis.conf")
       .withNetworkAliases("redis");
     REDIS_CONTAINER.start();
-    REDIS_CLIENT = new JedisPool("localhost", REDIS_CONTAINER.getMappedPort(6379));
+    REDIS_CLIENT = new JedisPool("127.0.0.1", REDIS_CONTAINER.getMappedPort(6379));
 
     List<File> dependencies = Maven.resolver()
       .loadPomFromFile("./pom.xml")
@@ -89,7 +92,6 @@ class RedisPublisherIntegrationTest {
   }
 
   @Test
-  @Disabled("Flaky")
   void shouldPublishAdminEvent() throws IOException, InterruptedException {
     var queue = new LinkedBlockingQueue<String>();
     var pubSub = new JedisPubSub() {
@@ -112,25 +114,27 @@ class RedisPublisherIntegrationTest {
     };
 
     try (var jedis = REDIS_CLIENT.getResource()) {
-      jedis.psubscribe(pubSub, REDIS_KEYCLOAK_ADMIN_EVENT_CHANNEL);
+      new Thread(() -> jedis.subscribe(pubSub, REDIS_KEYCLOAK_ADMIN_EVENT_CHANNEL)).start();
+
+      Keycloak adminClient = KEYCLOAK_CONTAINER.getKeycloakAdminClient();
+      RealmResource realm = adminClient.realm(TEST_REALM);
+
+      // Publish event
+      var groupRepresentation = new GroupRepresentation();
+      groupRepresentation.setName("test-group");
+      realm.groups().add(groupRepresentation);
+
+      var event = queue.poll(5, TimeUnit.SECONDS);
+      var adminEvent = OBJECT_MAPPER.readValue(event, AdminEvent.class);
+
+      assertThat(adminEvent).isNotNull();
+      assertThat(adminEvent.getOperationType()).isEqualTo(OperationType.CREATE);
+      assertThat(adminEvent.getResourceType()).isEqualTo(ResourceType.GROUP);
+      assertThat(adminEvent.getRepresentation()).isNotNull();
     }
-
-    Keycloak adminClient = KEYCLOAK_CONTAINER.getKeycloakAdminClient();
-    RealmResource realm = adminClient.realm(TEST_REALM);
-
-    // Publish event
-    var groupRepresentation = new GroupRepresentation();
-    groupRepresentation.setName("test-group");
-    realm.groups().add(groupRepresentation);
-
-    var event = queue.poll(5, TimeUnit.SECONDS);
-    var adminEvent = OBJECT_MAPPER.readValue(event, AdminEvent.class);
-
-    assertThat(adminEvent).isNotNull();
   }
 
   @Test
-  @Disabled("Flaky")
   void shouldPublishEvent() throws Exception {
 
     var queue = new LinkedBlockingQueue<String>();
@@ -153,38 +157,42 @@ class RedisPublisherIntegrationTest {
       }
     };
 
-    try (var jedis = REDIS_CLIENT.getResource()) {
-      jedis.psubscribe(pubSub, REDIS_KEYCLOAK_ADMIN_EVENT_CHANNEL);
+    try (
+      var jedis = REDIS_CLIENT.getResource();
+      ) {
+      new Thread(() -> jedis.subscribe(pubSub, REDIS_KEYCLOAK_EVENT_CHANNEL)).start();
+
+      Keycloak adminClient = KEYCLOAK_CONTAINER.getKeycloakAdminClient();
+      RealmResource realm = adminClient.realm(TEST_REALM);
+
+      // Create a new client
+      var client = new ClientRepresentation();
+      client.setName("test-client");
+      client.setSecret("secret");
+      client.setClientId("test-client");
+      client.setServiceAccountsEnabled(true);
+      realm.clients().create(client);
+
+      var tokenUrl = "http://" + KEYCLOAK_CONTAINER.getHost() + ":" + KEYCLOAK_CONTAINER.getHttpPort() + "/realms/" + TEST_REALM + "/protocol/openid-connect/token";
+
+      given()
+        .contentType(ContentType.APPLICATION_FORM_URLENCODED.getMimeType())
+        .formParam("client_id", client.getClientId())
+        .formParam("client_secret", client.getSecret())
+        .formParam("grant_type", "client_credentials")
+        .when()
+        .post(tokenUrl)
+        .then()
+        .log().ifValidationFails()
+        .statusCode(200);
+
+      var event = queue.poll(5, TimeUnit.SECONDS);
+      var clientEvent = OBJECT_MAPPER.readValue(event, Event.class);
+
+      assertThat(clientEvent).isNotNull();
+      assertThat(clientEvent.getType()).isEqualTo(EventType.CLIENT_LOGIN);
+      assertThat(clientEvent.getDetails()).isNotNull();
     }
-
-    Keycloak adminClient = KEYCLOAK_CONTAINER.getKeycloakAdminClient();
-    RealmResource realm = adminClient.realm(TEST_REALM);
-
-    // Create a new client
-    var client = new ClientRepresentation();
-    client.setName("test-client");
-    client.setSecret("secret");
-    client.setClientId("test-client");
-    client.setServiceAccountsEnabled(true);
-    realm.clients().create(client);
-
-    var tokenUrl = "http://" + KEYCLOAK_CONTAINER.getHost() + ":" + KEYCLOAK_CONTAINER.getHttpPort() + "/realms/" + TEST_REALM + "/protocol/openid-connect/token";
-
-    given()
-      .contentType(ContentType.APPLICATION_FORM_URLENCODED.getMimeType())
-      .formParam("client_id", client.getClientId())
-      .formParam("client_secret", client.getSecret())
-      .formParam("grant_type", "client_credentials")
-      .when()
-      .post(tokenUrl)
-      .then()
-      .log().ifValidationFails()
-      .statusCode(200);
-
-    var event = queue.poll(5, TimeUnit.SECONDS);
-    var clientEvent = OBJECT_MAPPER.readValue(event, Event.class);
-
-    assertThat(clientEvent).isNotNull();
   }
 
 }
