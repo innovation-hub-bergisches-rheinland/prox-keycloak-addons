@@ -1,7 +1,7 @@
-package de.innovationhub.prox.keycloak.redis.provider;
+package de.innovationhub.prox.keycloak.kafka.provider;
 
-import de.innovationhub.prox.keycloak.redis.KafkaConfigurationProperties;
-import de.innovationhub.prox.keycloak.redis.KafkaProducerFactory;
+import de.innovationhub.prox.keycloak.kafka.KafkaConfigurationProperties;
+import de.innovationhub.prox.keycloak.kafka.KafkaProducerFactory;
 import java.util.Map;
 import org.jboss.logging.Logger;
 import org.keycloak.Config.Scope;

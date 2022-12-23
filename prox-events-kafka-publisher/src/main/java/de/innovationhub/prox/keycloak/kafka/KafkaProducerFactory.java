@@ -1,4 +1,4 @@
-package de.innovationhub.prox.keycloak.redis;
+package de.innovationhub.prox.keycloak.kafka;
 
 import java.util.Map;
 import java.util.Properties;

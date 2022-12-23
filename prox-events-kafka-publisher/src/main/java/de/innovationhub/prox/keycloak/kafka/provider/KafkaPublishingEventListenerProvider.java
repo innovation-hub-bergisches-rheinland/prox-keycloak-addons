@@ -1,9 +1,9 @@
-package de.innovationhub.prox.keycloak.redis.provider;
+package de.innovationhub.prox.keycloak.kafka.provider;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.innovationhub.prox.keycloak.redis.KafkaProducerFactory;
-import de.innovationhub.prox.keycloak.redis.ProducerNotAvailableException;
+import de.innovationhub.prox.keycloak.kafka.ProducerNotAvailableException;
+import de.innovationhub.prox.keycloak.kafka.KafkaProducerFactory;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +74,7 @@ public class KafkaPublishingEventListenerProvider implements EventListenerProvid
    *
    * @param event
    * @param topic
-   * @throws de.innovationhub.prox.keycloak.redis.ProducerNotAvailableException
+   * @throws ProducerNotAvailableException
    * @throws InterruptedException
    * @throws ExecutionException
    * @throws TimeoutException

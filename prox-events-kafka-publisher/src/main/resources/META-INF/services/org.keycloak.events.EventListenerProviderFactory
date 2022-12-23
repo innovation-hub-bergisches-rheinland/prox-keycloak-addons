@@ -1,1 +1,1 @@
-de.innovationhub.prox.keycloak.redis.provider.RedisPublishingEventListenerProviderFactory
+de.innovationhub.prox.keycloak.kafka.provider.KafkaPublishingEventListenerProviderFactory
