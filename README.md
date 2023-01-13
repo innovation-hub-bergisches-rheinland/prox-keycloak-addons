@@ -1,3 +1,6 @@
+⚠️ **Deprecation Notice**
+Those addons aren't in use anymore, but might still be functional.
+
 # PROX Keycloak Addons
 
 These Keycloak Addons belong to PROX and adhere various cases here.
